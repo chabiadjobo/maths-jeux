@@ -1,9 +1,18 @@
 // Comparison game: < or >
 
 class ComparisonGame {
+    constructor() {
+        this.question = null;
+        this.currentAttempt = 0;
+        this.maxAttempts = 3;
+        this.answered = false;
+    }
+
     render(question, container, onAnswer) {
         this.question = question;
-        this.onAnswer = onAnswer;
+        this.currentAttempt = 0;
+        this.answered = false;
+        this.container = container;
 
         container.innerHTML = `
             <div class="game-comparison">
@@ -20,6 +29,7 @@ class ComparisonGame {
                         &gt;
                     </button>
                 </div>
+                <div id="feedbackContainer"></div>
             </div>
         `;
     }
@@ -29,18 +39,90 @@ class ComparisonGame {
     }
 
     handleAnswer(answer) {
-        if (answer === this.question.answer) {
-            window.game.audio.playSuccess();
-            this.showFeedback('Bien joué !', 'success');
-        } else {
-            window.game.audio.playError();
-            this.showFeedback('Essaie encore, ma princesse.', 'error');
+        if (this.answered) return;
+
+        this.currentAttempt++;
+        const isCorrect = answer === this.question.answer;
+
+        // Record attempt in game state
+        const questionState = window.game.lessonState.results[this.question.id];
+        if (!isCorrect) {
+            questionState.wrongAttempts++;
         }
+
+        if (isCorrect) {
+            this.showSuccess();
+        } else if (this.currentAttempt < this.maxAttempts) {
+            this.showError();
+        } else {
+            this.showNeedHelp();
+            questionState.adultHelpRequired = true;
+        }
+
+        window.game.storage.saveProgress(window.game.currentLesson.id, window.game.lessonState);
     }
 
-    showFeedback(message, type) {
-        // Placeholder - implemented in step 8
-        console.log(message, type);
+    showSuccess() {
+        this.answered = true;
+        window.game.audio.playSuccess();
+
+        const feedback = document.getElementById('feedbackContainer');
+        feedback.innerHTML = `
+            <div class="feedback feedback-success">
+                Bien joué ! 🎉
+            </div>
+        `;
+
+        // Mark as completed
+        window.game.lessonState.results[this.question.id].completed = true;
+        window.game.storage.saveProgress(window.game.currentLesson.id, window.game.lessonState);
+
+        setTimeout(() => window.game.nextQuestion(), 1500);
+    }
+
+    showError() {
+        window.game.audio.playError();
+
+        const feedback = document.getElementById('feedbackContainer');
+        let message = 'Essaie encore, ma princesse.';
+
+        if (this.currentAttempt === 2) {
+            message = this.getHint();
+        }
+
+        feedback.innerHTML = `
+            <div class="feedback feedback-${this.currentAttempt === 2 ? 'hint' : 'error'}">
+                ${message}
+            </div>
+        `;
+    }
+
+    showNeedHelp() {
+        window.game.audio.playError();
+
+        const feedback = document.getElementById('feedbackContainer');
+        feedback.innerHTML = `
+            <div class="feedback feedback-help">
+                Ma princesse, appelle papa ou maman pour une explication.
+            </div>
+            <button class="btn btn-primary" onclick="comparisonGame.retryAfterHelp()">
+                Réessayer après l'explication
+            </button>
+        `;
+    }
+
+    getHint() {
+        if (this.question.hint) {
+            return this.question.hint;
+        }
+
+        return 'Compare d\'abord le nombre de chiffres, puis les milliers, les centaines, les dizaines et les unités.';
+    }
+
+    retryAfterHelp() {
+        this.currentAttempt = 0;
+        this.answered = false;
+        this.render(this.question, this.container);
     }
 }
 
