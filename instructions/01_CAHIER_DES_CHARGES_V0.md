@@ -423,7 +423,7 @@ Nombre précédent : 4/4
 Nombre suivant : 4/4
 Entre deux nombres : 4/4
 
-Total : 28/28
+Total : 24/24
 Réussies sans aide : 25
 Réussies après aide : 3
 Erreurs : 7

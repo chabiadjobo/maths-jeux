@@ -18,25 +18,6 @@ class FeedbackManager {
         return hints[questionType] || 'Réfléchis bien.';
     }
 
-    static recordWrongAttempt(questionId) {
-        const state = window.game.lessonState.results[questionId];
-        if (state) {
-            state.wrongAttempts++;
-        }
-    }
-
-    static recordCompletion(questionId, withAdultHelp = false) {
-        const state = window.game.lessonState.results[questionId];
-        if (state) {
-            state.completed = true;
-            state.adultHelpRequired = withAdultHelp;
-        }
-    }
-
-    static isAnswerNeverRevealed() {
-        // This ensures that even after 3 errors, we never automatically show the answer
-        return true;
-    }
 }
 
 window.FeedbackManager = FeedbackManager;

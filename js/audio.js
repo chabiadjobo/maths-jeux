@@ -1,19 +1,16 @@
 // Audio feedback management using Web Audio API
 
 class AudioManager {
-    constructor() {
-        this.isMuted = false;
+    constructor(storage) {
+        this.storage = storage;
+        this.isMuted = storage ? storage.loadSoundPreference() : false;
         this.audioContext = null;
-        
-        // Restore mute preference from storage
-        if (window.storage) {
-            this.isMuted = window.storage.loadSoundPreference();
-        }
     }
 
     getAudioContext() {
         if (!this.audioContext) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) throw new Error('Web Audio API is not supported');
             this.audioContext = new AudioContext();
         }
         return this.audioContext;
