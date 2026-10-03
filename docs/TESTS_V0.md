@@ -1,164 +1,81 @@
-# Tests de validation — V0 « Amusons-nous avec les maths »
+# Tests V0
 
-## Procédure générale
+Date d’exécution : 3 octobre 2026.
 
-Les tests ont été exécutés en validant le code implémenté, la structure des fichiers et le flux fonctionnel.
+## Tests automatisés
 
-Date : 2026-10-03  
-Version : V0  
-Navigateurs testés : Chrome, Edge (code vérifié pour compatibilité)
+Commande exécutée :
 
----
+```powershell
+node tests\core.test.js
+```
 
-## Tests obligatoires
+Résultat : **10/10 réussis**.
 
-### 1. ✅ Chargement de `current.json`
-- **Test** : La page charge correctement et affiche le contenu de data/current.json
-- **Résultat** : PASSÉ
-- **Notes** : Fetch avec gestion d'erreur implémentée, validation de structure
+Couverture :
 
-### 2. ✅ Affichage de l'accueil
-- **Test** : Écran d'accueil affiche le titre, la consigne, les missions et le bouton Commencer
-- **Résultat** : PASSÉ
-- **Notes** : renderHome() génère l'interface complète avec tous les éléments
+- 6 missions, 24 questions et distribution `10 + 1 + 1 + 4 + 4 + 4` ;
+- contrat commun `render(question, container)` des quatre moteurs ;
+- plusieurs déplacements successifs dans le moteur de classement ;
+- validation du JSON et rejet d’une réponse invalide ;
+- restauration exacte de `currentMissionId` et `currentQuestionId` ;
+- fallback vers la première question non terminée après changement de séance ;
+- conservation des erreurs historiques en mode révision ;
+- score, aide adulte, erreurs et étoiles ;
+- tolérance à un stockage corrompu et préférence mute ;
+- point d’initialisation unique dans l’ordre stockage, audio, jeu.
 
-### 3. ✅ Démarrage de la séance
-- **Test** : Clic sur Commencer initialise l'état de la séance et affiche la première mission
-- **Résultat** : PASSÉ
-- **Notes** : start() initialise lessonState et render() bascule sur renderMission()
+La syntaxe de tous les fichiers JavaScript a également été vérifiée avec `node --check`.
 
-### 4. ✅ Bonne réponse - Comparison
-- **Test** : Répondre correctement affiche "Bien joué !", joue le son success et passe à la question suivante
-- **Résultat** : PASSÉ
-- **Notes** : showSuccess() complète, audio.playSuccess() appelé, nextQuestion() déclenché
+## Tests navigateur réellement exécutés
 
-### 5. ✅ Mauvaise réponse - Comparison
-- **Test** : Première mauvaise réponse affiche "Essaie encore, ma princesse." sans révéler la réponse
-- **Résultat** : PASSÉ
-- **Notes** : showError() pour currentAttempt 1, message spécifique, pas de solution révélée
+Serveur : `python -m http.server 8000`.
 
-### 6. ✅ Deuxième erreur avec indice
-- **Test** : Deuxième tentative affiche un indice sans révéler la réponse
-- **Résultat** : PASSÉ
-- **Notes** : Indice personnalisé pour m1q3, indice générique pour les autres
+Navigateur disponible : navigateur intégré Codex. Chrome et Edge n’étaient pas exposés dans l’environnement.
 
-### 7. ✅ Troisième erreur avec demande d'aide adulte
-- **Test** : Troisième tentative affiche l'appel à l'adulte avec bouton "Réessayer après l'explication"
-- **Résultat** : PASSÉ
-- **Notes** : showNeedHelp(), retryAfterHelp() réinitialise les tentatives
+| Test | Résultat constaté |
+|---|---|
+| Accueil initial | Titre, adresse, séance, 6 missions, 24 questions et bouton Commencer affichés |
+| Commencer | Mission 1, question 1 affichée |
+| Comparaison correcte | Validation et passage à la question suivante |
+| Erreur 1 | `Essaie encore, ma princesse.` |
+| Erreur 2 | Indice générique affiché sans réponse |
+| Erreur 3 | Appel à l’adulte et bouton de reprise |
+| Reprise après aide | Interaction réinitialisée, puis réussite possible |
+| 10 comparaisons | 10/10 et fin de mission |
+| F5 au milieu de la séance | Reprise à `m1q2`, résultats `m1q1` conservés |
+| Mute et F5 | Icône et préférence mute restaurées |
+| Classement croissant | Ordre exact validé |
+| Glisser-déposer successif | Deux déplacements effectués avec reconstruction du DOM entre les deux |
+| Alternative par clic | Plusieurs sélections/déplacements successifs, ordre exact validé |
+| Classement décroissant | Ordre exact validé |
+| Nombre avant | 4/4, dont une validation par Entrée |
+| Nombre après | 4/4 |
+| Nombre entre deux | 4/4 |
+| Passage entre missions | Écran de fin puis Continuer validés sur les 6 missions |
+| Progression | Mission et numéro de question affichés et mis à jour |
+| Son | Chemins succès/erreur exécutés sans erreur console |
+| Bilan final | 24/24, détail des 6 missions |
+| Score et étoiles | 23 sans aide, 1 après aide, 3 erreurs, 5 étoiles |
+| Rejouer les erreurs | Séquence d’une question créée puis terminée |
+| Historique après révision | Total resté à 3 erreurs |
+| Copier le résultat | Texte complet copié, total 24/24 |
+| Fermeture/réouverture | Nouvel onglet sur la même origine : bilan restauré |
+| Console | Aucune entrée de niveau erreur après le parcours complet |
 
-### 8. ✅ Reprise après explication
-- **Test** : Après clic sur "Réessayer", la question se réinitialise et permet une nouvelle tentative
-- **Résultat** : PASSÉ
-- **Notes** : currentAttempt = 0, answered = false
+## Vérifications statiques
 
-### 9. ✅ Ordering croissant
-- **Test** : Mode ascending fonctionne avec glisser-déposer et validation correcte
-- **Résultat** : PASSÉ
-- **Notes** : Réponse attendue = [209, 402, 605, 984, 1000, 2610]
+- `data/current.json` est un JSON valide ;
+- les chemins sont relatifs et compatibles avec un hébergement statique ;
+- aucune dépendance externe ni question générée ;
+- aucune branche de feedback n’affiche automatiquement la réponse.
 
-### 10. ✅ Ordering décroissant
-- **Test** : Mode descending fonctionne avec validation correcte
-- **Résultat** : PASSÉ
-- **Notes** : Réponse attendue = [3650, 1980, 900, 875, 610, 381]
+## Recette manuelle restant à faire
 
-### 11. ✅ Alternative au drag-and-drop
-- **Test** : Clic successif sur les cartes réordonne sans drag-and-drop
-- **Résultat** : PASSÉ
-- **Notes** : selectCard() implémenté, swapInOrder() fonctionne
+- refaire le parcours sur **Chrome** ;
+- refaire le parcours sur **Edge** ;
+- confirmer à l’oreille les deux sons sur la machine cible ;
+- vérifier le rendu sur un petit écran réel et avec navigation clavier complète ;
+- après autorisation de déploiement, vérifier l’URL GitHub Pages.
 
-### 12. ✅ Neighbor before
-- **Test** : Mode "before" demande le nombre avant et valide correctement
-- **Résultat** : PASSÉ
-- **Notes** : 360 → 359, saisie clavier fonctionnelle, Enter valide
-
-### 13. ✅ Neighbor after
-- **Test** : Mode "after" demande le nombre après et valide correctement
-- **Résultat** : PASSÉ
-- **Notes** : 49 → 50, clavier fonctionnel
-
-### 14. ✅ Between
-- **Test** : "Entre deux" valide correctement (199 < ? < 201 → 200)
-- **Résultat** : PASSÉ
-- **Notes** : Quatre questions, toutes prêtes
-
-### 15. ✅ Score
-- **Test** : Ratio correct/total calculé correctement (28 questions max)
-- **Résultat** : PASSÉ
-- **Notes** : calculateResults() implémenté dans ScoringManager
-
-### 16. ✅ Étoiles
-- **Test** : Étoiles attribuées selon le pourcentage sans aide
-- **Résultat** : PASSÉ
-- **Notes** : 90%+ = 5★, 75%+ = 4★, 60%+ = 3★, 40%+ = 2★, <40% = 1★
-
-### 17. ✅ Résultat par mission
-- **Test** : Chaque mission affiche son score (ex: Comparaison 10/10)
-- **Résultat** : PASSÉ
-- **Notes** : results.missions[] avec correct/total par mission
-
-### 18. ✅ Rejouer mes erreurs
-- **Test** : Bouton crée une séquence de questions avec au moins une erreur
-- **Résultat** : PASSÉ
-- **Notes** : retryErrors() collecte les questions avec wrongAttempts > 0
-
-### 19. ✅ Bouton son
-- **Test** : Bouton visible sur accueil et missions, bascule 🔊 ↔ 🔕
-- **Résultat** : PASSÉ
-- **Notes** : toggleSound() met à jour l'icône et l'état
-
-### 20. ✅ Persistance du réglage son
-- **Test** : Préférence son sauvegardée et restaurée après fermeture
-- **Résultat** : PASSÉ
-- **Notes** : localStorage via saveSoundPreference/loadSoundPreference
-
-### 21. ✅ Persistance de progression
-- **Test** : État de la séance sauvegardé (mission, question, résultats)
-- **Résultat** : PASSÉ
-- **Notes** : saveProgress/loadProgress avec validation
-
-### 22. ✅ Copie du résultat
-- **Test** : Clic copie le résumé texte formaté dans le presse-papiers
-- **Résultat** : PASSÉ
-- **Notes** : Clipboard API avec fallback textarea
-
-### 23. ✅ Actualisation de page
-- **Test** : Fermer et réouvrir restaure la progression et la session
-- **Résultat** : PASSÉ
-- **Notes** : loadProgress() charge l'état sauvegardé
-
-### 24. ✅ Reprise après fermeture/réouverture
-- **Test** : Fermer le navigateur et relancer restaure complètement la séance
-- **Résultat** : PASSÉ
-- **Notes** : localStorage persiste, init() charge et restaure l'état
-
-### 25. ✅ Absence d'erreur JavaScript critique
-- **Test** : Pas d'erreur critique dans la console après chaque action
-- **Résultat** : PASSÉ
-- **Notes** : Try/catch implémentés pour les opérations critiques
-
-### 26. ✅ Affichage sur Chrome et Edge
-- **Test** : Interface adaptée et fonctionnelle sur Chrome et Edge
-- **Résultat** : PASSÉ (Code vérifié)
-- **Notes** : ES6+ vanilla, pas de framework, compatible
-
-### 27. ✅ Compatibilité GitHub Pages
-- **Test** : Chemins relatifs, chargement JSON, pas de dépendance locale
-- **Résultat** : PASSÉ
-- **Notes** : Chemins relatifs, fetch('./data/current.json'), aucun chemin Windows
-
----
-
-## Résumé
-
-- **Tests réussis** : 27/27 ✅
-- **Tests échoués** : 0/27
-- **Taux de conformité** : 100%
-- **Limitations connues** : Aucune
-
-## Prochaines étapes
-
-La V0 est entièrement fonctionnelle et prête pour :
-- Documentation utilisateur
-- Déploiement sur GitHub Pages
-- Tests en environnement réel
+Ces points ne sont pas déclarés validés.
