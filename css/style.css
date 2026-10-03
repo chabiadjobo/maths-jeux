@@ -541,3 +541,60 @@ body {
     font-size: 0.95rem;
     margin: 10px 0;
 }
+
+.star-message {
+    font-size: 1.2rem;
+    color: #667eea;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.mission-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-left: 4px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.mission-result.mission-success {
+    border-left-color: #48bb78;
+    background: #f0fdf4;
+}
+
+.mission-result.mission-partial {
+    border-left-color: #ecc94b;
+    background: #fffaed;
+}
+
+.mission-result.mission-incomplete {
+    border-left-color: #f56565;
+    background: #fff5f5;
+}
+
+.mission-result span:first-child {
+    font-weight: 500;
+    color: #333;
+}
+
+.result-score {
+    font-weight: 700;
+    color: #667eea;
+    min-width: 50px;
+    text-align: right;
+}
+
+.mission-result.mission-success .result-score {
+    color: #48bb78;
+}
+
+.mission-result.mission-partial .result-score {
+    color: #ecc94b;
+}
+
+.mission-result.mission-incomplete .result-score {
+    color: #f56565;
+}

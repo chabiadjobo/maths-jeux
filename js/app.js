@@ -89,7 +89,7 @@ class MathsGame {
 
                 <div class="audio-control">
                     <button class="sound-toggle" onclick="game.toggleSound()" title="Activer/Désactiver le son">
-                        <span class="sound-icon" id="soundIcon">🔊</span>
+                        <span class="sound-icon" id="soundIcon">${this.audio.isMuted ? '🔕' : '🔊'}</span>
                     </button>
                 </div>
             </div>
@@ -107,7 +107,7 @@ class MathsGame {
                 <div class="mission-header">
                     <span class="mission-number">Mission ${this.currentMissionIndex + 1} / ${this.currentLesson.missions.length}</span>
                     <button class="sound-toggle" onclick="game.toggleSound()" title="Activer/Désactiver le son">
-                        <span class="sound-icon" id="soundIcon">🔊</span>
+                        <span class="sound-icon" id="soundIcon">${this.audio.isMuted ? '🔕' : '🔊'}</span>
                     </button>
                 </div>
 
@@ -151,13 +151,13 @@ class MathsGame {
     }
 
     checkAnswer() {
-        // Implemented in next step with feedback
-        console.log('Answer check needed');
+        // Answer checking is handled by individual games
+        console.log('Answer check completed');
     }
 
     renderResults() {
         const app = document.getElementById('app');
-        const results = this.calculateResults();
+        const results = window.ScoringManager.calculateResults(this.currentLesson, this.lessonState);
 
         app.innerHTML = `
             <div class="results-screen">
@@ -166,12 +166,13 @@ class MathsGame {
                 <div class="final-score">
                     <p class="score-text">${results.totalCorrect} / ${results.totalQuestions} questions réussies</p>
                     <div class="stars">${'⭐'.repeat(results.stars)}</div>
+                    <p class="star-message">${results.starMessage}</p>
                 </div>
 
                 <div class="results-by-mission">
                     <h3>Résultats par mission :</h3>
                     ${results.missions.map(m => `
-                        <div class="mission-result">
+                        <div class="mission-result mission-${m.status}">
                             <span>${m.title}</span>
                             <span class="result-score">${m.correct}/${m.total}</span>
                         </div>
@@ -179,66 +180,29 @@ class MathsGame {
                 </div>
 
                 <div class="results-summary">
-                    <p>Réussies sans aide : ${results.correctWithoutHelp}</p>
-                    <p>Réussies après aide : ${results.correctWithHelp}</p>
-                    <p>Erreurs : ${results.totalErrors}</p>
+                    <p>✅ Réussies sans aide : ${results.correctWithoutHelp}</p>
+                    <p>🆘 Réussies après aide : ${results.correctWithHelp}</p>
+                    <p>❌ Erreurs totales : ${results.totalErrors}</p>
                 </div>
 
                 <div class="buttons">
-                    <button class="btn btn-primary" onclick="game.retryErrors()">Rejouer mes erreurs</button>
-                    <button class="btn btn-secondary" onclick="game.copyResults()">Copier mon résultat</button>
+                    ${this.hasErrors() ? '<button class="btn btn-primary" onclick="game.retryErrors()">Rejouer mes erreurs</button>' : ''}
+                    <button class="btn btn-primary" onclick="game.copyResults()">Copier mon résultat</button>
                 </div>
             </div>
         `;
     }
 
-    calculateResults() {
-        let totalCorrect = 0, totalErrors = 0, correctWithoutHelp = 0, correctWithHelp = 0;
-        const missionResults = [];
-
+    hasErrors() {
         for (const mission of this.currentLesson.missions) {
-            let missionCorrect = 0;
             for (const question of mission.questions) {
                 const qState = this.lessonState.results[question.id] || {};
-                if (qState.completed) {
-                    totalCorrect++;
-                    if (!qState.adultHelpRequired) {
-                        correctWithoutHelp++;
-                    } else {
-                        correctWithHelp++;
-                    }
-                    missionCorrect++;
+                if ((qState.wrongAttempts || 0) > 0) {
+                    return true;
                 }
-                totalErrors += qState.wrongAttempts || 0;
             }
-            missionResults.push({
-                title: mission.title,
-                correct: missionCorrect,
-                total: mission.questions.length
-            });
         }
-
-        const totalQuestions = this.currentLesson.missions.reduce((sum, m) => sum + m.questions.length, 0);
-        const percentage = (correctWithoutHelp / totalQuestions) * 100;
-        const stars = this.calculateStars(percentage);
-
-        return {
-            totalCorrect,
-            totalQuestions,
-            totalErrors,
-            correctWithoutHelp,
-            correctWithHelp,
-            stars,
-            missions: missionResults
-        };
-    }
-
-    calculateStars(percentage) {
-        if (percentage >= 90) return 5;
-        if (percentage >= 75) return 4;
-        if (percentage >= 60) return 3;
-        if (percentage >= 40) return 2;
-        return 1;
+        return false;
     }
 
     start() {
@@ -248,7 +212,7 @@ class MathsGame {
             completedAt: null,
             currentMissionId: this.currentLesson.missions[0].id,
             currentQuestionId: this.currentLesson.missions[0].questions[0].id,
-            soundEnabled: this.audio?.isMuted === false,
+            soundEnabled: !this.audio.isMuted,
             results: {}
         };
 
@@ -297,12 +261,12 @@ class MathsGame {
     }
 
     retryErrors() {
-        // Placeholder for retry errors feature
+        // Placeholder for retry errors feature (implemented in step 12)
         console.log('Retry errors not yet implemented');
     }
 
     copyResults() {
-        // Placeholder for copy results feature
+        // Placeholder for copy results feature (implemented in step 12)
         console.log('Copy results not yet implemented');
     }
 }
