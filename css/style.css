@@ -528,3 +528,16 @@ body {
     color: #999;
     font-weight: 600;
 }
+
+.card.selected {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 0 20px rgba(118, 75, 162, 0.6);
+    transform: scale(1.05);
+}
+
+.ordering-instructions {
+    text-align: center;
+    color: #999;
+    font-size: 0.95rem;
+    margin: 10px 0;
+}
