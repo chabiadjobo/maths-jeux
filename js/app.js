@@ -130,7 +130,7 @@ class MathsGame {
         const allCompleted = this.getAllQuestions().every(({ question }) => state.results[question.id].completed);
         if (allCompleted && state.completedAt) {
             const lastMission = this.currentLesson.missions.at(-1);
-            state.screen = 'results';
+            state.screen = savedState.screen === 'home' ? 'home' : 'results';
             state.currentMissionId = lastMission.id;
             state.currentQuestionId = lastMission.questions.at(-1).id;
             this.currentMissionIndex = this.currentLesson.missions.length - 1;
@@ -177,6 +177,7 @@ class MathsGame {
 
     render() {
         if (!this.lessonState) this.renderHome();
+        else if (this.lessonState.screen === 'home') this.renderHome();
         else if (this.retryMode) this.renderRetryMission();
         else if (this.lessonState.completedAt || this.lessonState.screen === 'results') this.renderResults();
         else if (this.lessonState.screen === 'missionComplete') this.renderMissionComplete();
@@ -184,6 +185,18 @@ class MathsGame {
     }
 
     renderHome() {
+        let actions;
+        let status = '';
+        if (!this.lessonState) {
+            actions = '<button class="btn btn-primary" type="button" onclick="window.game.start()">Commencer</button>';
+        } else if (this.lessonState.completedAt) {
+            status = '<p class="session-status">Séance terminée</p>';
+            actions = `
+                <button class="btn btn-primary" type="button" onclick="window.game.viewResults()">Voir mon résultat</button>
+                <button class="btn btn-secondary" type="button" onclick="window.game.restartLesson()">Recommencer la séance</button>`;
+        } else {
+            actions = '<button class="btn btn-primary" type="button" onclick="window.game.continueLesson()">Continuer ma séance</button>';
+        }
         document.getElementById('app').innerHTML = `
             <main class="home-screen">
                 <h1 class="app-title">Amusons-nous avec les maths</h1>
@@ -192,8 +205,9 @@ class MathsGame {
                     <h2 id="lesson-title">${this.currentLesson.title}</h2>
                     ${this.currentLesson.description ? `<p>${this.currentLesson.description}</p>` : ''}
                     <p class="mission-count">📋 ${this.currentLesson.missions.length} missions • ${this.getAllQuestions().length} questions</p>
+                    ${status}
                 </section>
-                <div class="buttons"><button class="btn btn-primary" type="button" onclick="window.game.start()">Commencer</button></div>
+                <div class="buttons">${actions}</div>
                 ${this.soundButton('audio-control')}
             </main>`;
     }
@@ -244,7 +258,12 @@ class MathsGame {
                     ${results.missions.map(mission => `<div class="mission-result mission-${mission.status}"><span>${mission.title}</span><span class="result-score">${mission.correct}/${mission.total}</span></div>`).join('')}
                 </section>
                 <div class="results-summary"><p>✅ Réussies sans aide : ${results.correctWithoutHelp}</p><p>🆘 Réussies après aide : ${results.correctWithHelp}</p><p>❌ Erreurs totales : ${results.totalErrors}</p></div>
-                <div class="buttons">${this.hasErrors() ? '<button class="btn btn-primary" type="button" onclick="window.game.retryErrors()">Rejouer mes erreurs</button>' : ''}<button class="btn btn-secondary" type="button" onclick="window.game.copyResults()">Copier mon résultat</button></div>
+                <div class="buttons">
+                    ${this.hasErrors() ? '<button class="btn btn-primary" type="button" onclick="window.game.retryErrors()">Rejouer mes erreurs</button>' : ''}
+                    <button class="btn btn-secondary" type="button" onclick="window.game.copyResults()">Copier mon résultat</button>
+                    <button class="btn btn-secondary" type="button" onclick="window.game.returnHome()">Retour à l'accueil</button>
+                    <button class="btn btn-secondary" type="button" onclick="window.game.restartLesson()">Recommencer la séance</button>
+                </div>
                 ${this.soundButton('audio-control')}
             </main>`;
     }
@@ -269,6 +288,44 @@ class MathsGame {
         this.currentMissionIndex = 0;
         this.currentQuestionIndex = 0;
         this.retryMode = false;
+        this.saveProgress();
+        this.render();
+    }
+
+    returnHome() {
+        if (this.lessonState) {
+            this.lessonState.screen = 'home';
+            this.saveProgress();
+        }
+        this.renderHome();
+    }
+
+    continueLesson() {
+        if (!this.lessonState || this.lessonState.completedAt) return;
+        this.lessonState.screen = 'mission';
+        this.saveProgress();
+        this.render();
+    }
+
+    viewResults() {
+        if (!this.lessonState || !this.lessonState.completedAt) return;
+        this.lessonState.screen = 'results';
+        this.saveProgress();
+        this.renderResults();
+    }
+
+    restartLesson() {
+        const confirmed = window.confirm('Recommencer la séance ? La progression et les résultats de cette séance seront remis à zéro.');
+        if (!confirmed) return;
+
+        this.storage.clearLesson(this.currentLesson.id);
+        this.lessonState = this.createInitialState();
+        this.currentMissionIndex = 0;
+        this.currentQuestionIndex = 0;
+        this.retryMode = false;
+        this.retryQuestions = [];
+        this.retryIndex = 0;
+        this.retryResults = {};
         this.saveProgress();
         this.render();
     }

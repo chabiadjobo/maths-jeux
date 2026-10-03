@@ -43,9 +43,11 @@ const lesson = JSON.parse(read('data/current.json'));
 function fakeStorage() {
     return {
         saved: null,
+        clearedLessonIds: [],
         saveProgress(lessonId, state) { this.saved = { lessonId, state: JSON.parse(JSON.stringify(state)) }; return true; },
         loadProgress() { return null; },
-        saveSoundPreference() { return true; }
+        saveSoundPreference() { return true; },
+        clearLesson(lessonId) { this.clearedLessonIds.push(lessonId); return true; }
     };
 }
 
@@ -141,6 +143,97 @@ test('retry mode preserves the historical wrong-attempt count', () => {
     game.recordWrongAttempt('m1q1');
     assert.equal(game.lessonState.results.m1q1.wrongAttempts, 3);
     assert.equal(game.retryResults.m1q1.wrongAttempts, 1);
+});
+
+test('the home screen adapts its actions to absent, active, and completed progress', () => {
+    const { context } = loadScripts(['js/app.js']);
+    const appElement = { innerHTML: '' };
+    context.document.getElementById = () => appElement;
+    const game = new context.window.MathsGame(fakeStorage(), fakeAudio());
+    game.currentLesson = lesson;
+
+    game.lessonState = null;
+    game.renderHome();
+    assert.match(appElement.innerHTML, />Commencer</);
+
+    game.lessonState = game.createInitialState();
+    game.renderHome();
+    assert.match(appElement.innerHTML, /Continuer ma séance/);
+
+    game.lessonState.completedAt = new Date().toISOString();
+    game.renderHome();
+    assert.match(appElement.innerHTML, /Séance terminée/);
+    assert.match(appElement.innerHTML, /Voir mon résultat/);
+    assert.match(appElement.innerHTML, /Recommencer la séance/);
+});
+
+test('returning home preserves completed results and persists only the view', () => {
+    const storage = fakeStorage();
+    const { context } = loadScripts(['js/app.js']);
+    const game = new context.window.MathsGame(storage, fakeAudio());
+    game.currentLesson = lesson;
+    game.lessonState = game.createInitialState();
+    game.lessonState.completedAt = new Date().toISOString();
+    game.lessonState.results.m1q1 = { wrongAttempts: 3, completed: true, adultHelpRequired: true };
+    const resultsBefore = JSON.stringify(game.lessonState.results);
+    let homeRendered = false;
+    game.renderHome = () => { homeRendered = true; };
+
+    game.returnHome();
+
+    assert.equal(homeRendered, true);
+    assert.equal(game.lessonState.screen, 'home');
+    assert.equal(JSON.stringify(game.lessonState.results), resultsBefore);
+    assert.equal(storage.clearedLessonIds.length, 0);
+    assert.equal(storage.saved.state.screen, 'home');
+});
+
+test('a completed home view survives state normalization for reload', () => {
+    const { context } = loadScripts(['js/app.js']);
+    const game = new context.window.MathsGame(fakeStorage(), fakeAudio());
+    game.currentLesson = lesson;
+    const state = game.createInitialState();
+    for (const result of Object.values(state.results)) result.completed = true;
+    state.completedAt = new Date().toISOString();
+    state.screen = 'home';
+
+    const normalized = game.normalizeState(state);
+
+    assert.equal(normalized.screen, 'home');
+    assert.ok(normalized.completedAt);
+    assert.equal(Object.values(normalized.results).every(result => result.completed), true);
+});
+
+test('lesson restart can be cancelled and preserves mute when confirmed', () => {
+    const storage = fakeStorage();
+    const audio = fakeAudio(true);
+    const { context } = loadScripts(['js/app.js']);
+    const game = new context.window.MathsGame(storage, audio);
+    game.currentLesson = lesson;
+    game.lessonState = game.createInitialState();
+    game.lessonState.results.m1q1 = { wrongAttempts: 2, completed: true, adultHelpRequired: true };
+    const previousState = game.lessonState;
+    let renderCount = 0;
+    game.render = () => { renderCount++; };
+
+    context.window.confirm = () => false;
+    game.restartLesson();
+    assert.equal(game.lessonState, previousState);
+    assert.equal(storage.clearedLessonIds.length, 0);
+    assert.equal(renderCount, 0);
+
+    context.window.confirm = () => true;
+    game.restartLesson();
+    assert.deepEqual(storage.clearedLessonIds, [lesson.id]);
+    assert.equal(game.currentMissionIndex, 0);
+    assert.equal(game.currentQuestionIndex, 0);
+    assert.equal(game.lessonState.currentMissionId, 'm1');
+    assert.equal(game.lessonState.currentQuestionId, 'm1q1');
+    assert.equal(game.lessonState.completedAt, null);
+    assert.equal(game.lessonState.soundEnabled, false);
+    assert.equal(audio.isMuted, true);
+    assert.equal(Object.values(game.lessonState.results).every(result => !result.completed && result.wrongAttempts === 0), true);
+    assert.equal(renderCount, 1);
 });
 
 test('scoring counts 24 questions and applies the star thresholds', () => {
