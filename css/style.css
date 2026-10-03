@@ -8,10 +8,523 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f5f5f5;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #333;
+    min-height: 100vh;
 }
 
 #app {
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Common screens */
+.home-screen,
+.mission-screen,
+.results-screen,
+.error-screen {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+/* Home Screen */
+.home-screen {
+    text-align: center;
+}
+
+.app-title {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.greeting {
+    font-size: 1.5rem;
+    color: #764ba2;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.lesson-info {
+    background: #f0f4ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+}
+
+.lesson-info h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.lesson-info p {
+    font-size: 1rem;
+    color: #666;
+    margin: 10px 0;
+}
+
+.mission-count {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    margin-top: 15px;
+}
+
+/* Buttons */
+.buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.btn {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 140px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* Audio Control */
+.audio-control {
+    margin-top: 30px;
+}
+
+.sound-toggle {
+    background: none;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sound-toggle:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.sound-icon {
+    display: inline-block;
+}
+
+/* Mission Screen */
+.mission-screen {
+    text-align: center;
+}
+
+.mission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.mission-number {
+    font-size: 1rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.mission-screen h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.instruction {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 30px;
+    min-height: 30px;
+}
+
+#gameContainer {
+    margin: 40px 0;
+    min-height: 150px;
+}
+
+.progress {
+    margin-top: 40px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* Results Screen */
+.results-screen {
+    text-align: center;
+}
+
+.results-screen h1 {
+    font-size: 2rem;
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.final-score {
+    background: #f0f4ff;
+    padding: 30px;
+    border-radius: 8px;
+    margin: 30px 0;
+}
+
+.score-text {
+    font-size: 1.5rem;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.stars {
+    font-size: 2.5rem;
+    letter-spacing: 5px;
+}
+
+.results-by-mission {
+    text-align: left;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.results-by-mission h3 {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.mission-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.mission-result:last-child {
+    border-bottom: none;
+}
+
+.result-score {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.results-summary {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #e0e0e0;
+}
+
+.results-summary p {
+    font-size: 0.95rem;
+    color: #666;
+    margin: 8px 0;
+}
+
+/* Error Screen */
+.error-screen {
+    text-align: center;
+    background: #fff5f5;
+}
+
+.error-screen h1 {
+    color: #e53e3e;
+    margin-bottom: 15px;
+}
+
+.error-screen p {
+    color: #c53030;
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .home-screen,
+    .mission-screen,
+    .results-screen,
+    .error-screen {
+        padding: 25px;
+    }
+
+    .app-title {
+        font-size: 1.8rem;
+    }
+
+    .greeting {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+
+    .mission-screen h2 {
+        font-size: 1.4rem;
+    }
+
+    .instruction {
+        font-size: 1rem;
+    }
+}
+
+/* Feedback Messages */
+.feedback {
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.feedback-success {
+    background: #c6f6d5;
+    color: #22543d;
+    border: 2px solid #9ae6b4;
+}
+
+.feedback-error {
+    background: #fed7d7;
+    color: #742a2a;
+    border: 2px solid #fc8181;
+}
+
+.feedback-hint {
+    background: #bee3f8;
+    color: #2c5282;
+    border: 2px solid #90cdf4;
+}
+
+.feedback-help {
+    background: #feebc8;
+    color: #7c2d12;
+    border: 2px solid #fbd38d;
+}
+
+/* Game-specific styles will be added in later steps */
+
+/* Game Styles */
+
+.game-comparison,
+.game-ordering,
+.game-neighbor,
+.game-between {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+/* Comparison Game */
+.game-comparison .numbers {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.game-comparison .number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #667eea;
+    min-width: 100px;
+    text-align: center;
+}
+
+.game-comparison .question-mark {
+    font-size: 2rem;
+    color: #ccc;
+}
+
+.buttons-game {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-answer {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.btn-answer:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-answer:active {
+    transform: scale(0.95);
+}
+
+/* Ordering Game */
+.game-ordering .cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin: 20px 0;
+    min-height: 100px;
+}
+
+.card {
+    padding: 15px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.card.dragging {
+    opacity: 0.5;
+}
+
+.ordering-order {
+    width: 100%;
+    padding: 20px;
+    background: #f0f4ff;
+    border-radius: 8px;
+}
+
+.order-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.order-item {
+    padding: 8px 15px;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* Neighbor Game */
+.game-neighbor .neighbor-display,
+.game-between .between-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    flex-wrap: wrap;
+    margin: 30px 0;
+}
+
+.number-input {
+    width: 100px;
+    height: 60px;
+    font-size: 1.8rem;
+    text-align: center;
+    border: 3px solid #667eea;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.number-input:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+.number {
+    color: #667eea;
+    min-width: 80px;
+    text-align: center;
+}
+
+.arrow,
+.symbol {
+    color: #999;
+    font-weight: 600;
 }
