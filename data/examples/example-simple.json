@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "example-simple",
+  "date": "2026-10-03",
+  "title": "Exemple simple",
+  "description": "Exemple minimal pour montrer la structure",
+  "missions": [
+    {
+      "id": "m1",
+      "type": "comparison",
+      "title": "Comparaison",
+      "instruction": "Choisis le bon symbole.",
+      "questions": [
+        {"id": "m1q1", "left": 10, "right": 5, "answer": ">"},
+        {"id": "m1q2", "left": 3, "right": 7, "answer": "<"}
+      ]
+    }
+  ]
+}
