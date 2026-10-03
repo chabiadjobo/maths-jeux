@@ -6,6 +6,8 @@ class MathsGame {
         this.lessonState = null;
         this.currentMissionIndex = 0;
         this.currentQuestionIndex = 0;
+        this.retryMode = false;
+        this.retryQuestions = [];
     }
 
     async init() {
@@ -61,7 +63,7 @@ class MathsGame {
     render() {
         if (!this.lessonState) {
             this.renderHome();
-        } else if (this.lessonState.completedAt) {
+        } else if (this.lessonState.completedAt && !this.retryMode) {
             this.renderResults();
         } else {
             this.renderMission();
@@ -187,7 +189,7 @@ class MathsGame {
 
                 <div class="buttons">
                     ${this.hasErrors() ? '<button class="btn btn-primary" onclick="game.retryErrors()">Rejouer mes erreurs</button>' : ''}
-                    <button class="btn btn-primary" onclick="game.copyResults()">Copier mon résultat</button>
+                    <button class="btn btn-secondary" onclick="game.copyResults()">Copier mon résultat</button>
                 </div>
             </div>
         `;
@@ -230,21 +232,38 @@ class MathsGame {
         this.storage.saveProgress(this.currentLesson.id, this.lessonState);
         this.currentMissionIndex = 0;
         this.currentQuestionIndex = 0;
+        this.retryMode = false;
+        this.retryQuestions = [];
         this.render();
     }
 
     nextQuestion() {
-        const mission = this.currentLesson.missions[this.currentMissionIndex];
-        
-        if (this.currentQuestionIndex < mission.questions.length - 1) {
-            this.currentQuestionIndex++;
-        } else if (this.currentMissionIndex < this.currentLesson.missions.length - 1) {
-            this.currentMissionIndex++;
-            this.currentQuestionIndex = 0;
+        let currentIndex = this.currentQuestionIndex;
+        let currentMissionIdx = this.currentMissionIndex;
+
+        if (this.retryMode) {
+            currentIndex++;
+            if (currentIndex >= this.retryQuestions.length) {
+                // End of retry session - show results
+                this.retryMode = false;
+                this.render();
+                return;
+            }
+
+            this.currentQuestionIndex = currentIndex;
         } else {
-            // Lesson completed
-            this.lessonState.completedAt = new Date().toISOString();
-            this.storage.saveProgress(this.currentLesson.id, this.lessonState);
+            const mission = this.currentLesson.missions[this.currentMissionIndex];
+            
+            if (this.currentQuestionIndex < mission.questions.length - 1) {
+                this.currentQuestionIndex++;
+            } else if (this.currentMissionIndex < this.currentLesson.missions.length - 1) {
+                this.currentMissionIndex++;
+                this.currentQuestionIndex = 0;
+            } else {
+                // Lesson completed
+                this.lessonState.completedAt = new Date().toISOString();
+                this.storage.saveProgress(this.currentLesson.id, this.lessonState);
+            }
         }
 
         this.storage.saveProgress(this.currentLesson.id, this.lessonState);
@@ -261,13 +280,140 @@ class MathsGame {
     }
 
     retryErrors() {
-        // Placeholder for retry errors feature (implemented in step 12)
-        console.log('Retry errors not yet implemented');
+        // Collect questions with errors
+        this.retryQuestions = [];
+
+        for (const mission of this.currentLesson.missions) {
+            for (const question of mission.questions) {
+                const qState = this.lessonState.results[question.id] || {};
+                if ((qState.wrongAttempts || 0) > 0) {
+                    this.retryQuestions.push({
+                        question: question,
+                        missionType: mission.type,
+                        missionTitle: mission.title
+                    });
+                }
+            }
+        }
+
+        console.log('Retry questions:', this.retryQuestions.length);
+
+        if (this.retryQuestions.length === 0) {
+            alert('Aucune erreur à rejouer !');
+            return;
+        }
+
+        // Start retry session
+        this.retryMode = true;
+        this.currentQuestionIndex = 0;
+
+        // Reset attempt counts for retry
+        for (const item of this.retryQuestions) {
+            const qState = this.lessonState.results[item.question.id];
+            qState.wrongAttempts = 0; // Reset for retry
+        }
+
+        this.storage.saveProgress(this.currentLesson.id, this.lessonState);
+        this.renderRetryMission();
+    }
+
+    renderRetryMission() {
+        const item = this.retryQuestions[this.currentQuestionIndex];
+        const progress = `${this.currentQuestionIndex + 1} / ${this.retryQuestions.length}`;
+
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <div class="mission-screen">
+                <div class="mission-header">
+                    <span class="mission-number">Correction ${progress}</span>
+                    <button class="sound-toggle" onclick="game.toggleSound()" title="Activer/Désactiver le son">
+                        <span class="sound-icon" id="soundIcon">${this.audio.isMuted ? '🔕' : '🔊'}</span>
+                    </button>
+                </div>
+
+                <h2>${item.missionTitle}</h2>
+                <p class="instruction">Corrigeons ensemble !</p>
+
+                <div id="gameContainer"></div>
+
+                <div class="progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(this.currentQuestionIndex / this.retryQuestions.length) * 100}%"></div>
+                    </div>
+                    <p class="progress-text">${progress}</p>
+                </div>
+            </div>
+        `;
+
+        // Render game
+        const container = document.getElementById('gameContainer');
+        switch (item.missionType) {
+            case 'comparison':
+                window.comparisonGame.render(item.question, container);
+                break;
+            case 'ordering':
+                window.orderingGame.render(item.question, container);
+                break;
+            case 'neighbor':
+                window.neighborGame.render(item.question, container);
+                break;
+            case 'between':
+                window.betweenGame.render(item.question, container);
+                break;
+        }
     }
 
     copyResults() {
-        // Placeholder for copy results feature (implemented in step 12)
-        console.log('Copy results not yet implemented');
+        const results = window.ScoringManager.calculateResults(this.currentLesson, this.lessonState);
+        const date = new Date(this.lessonState.startedAt).toLocaleDateString('fr-FR');
+
+        const missionLines = results.missions.map(m => 
+            `${m.title} : ${m.correct}/${m.total}`
+        ).join('\n');
+
+        const text = `Amusons-nous avec les maths — ${date}
+${this.currentLesson.title}
+
+${missionLines}
+
+Total : ${results.totalCorrect}/${results.totalQuestions}
+Réussies sans aide : ${results.correctWithoutHelp}
+Réussies après aide : ${results.correctWithHelp}
+Erreurs : ${results.totalErrors}`;
+
+        // Try Clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Résultat copié !');
+                console.log('Results copied to clipboard');
+            }).catch(err => {
+                console.error('Clipboard copy failed:', err);
+                this.fallbackCopyResults(text);
+            });
+        } else {
+            // Fallback for older browsers
+            this.fallbackCopyResults(text);
+        }
+    }
+
+    fallbackCopyResults(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        
+        try {
+            textarea.select();
+            document.execCommand('copy');
+            alert('Résultat copié !');
+            console.log('Results copied via fallback');
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            alert('Impossible de copier. Veuillez copier manuellement le texte suivant:\n\n' + text);
+        } finally {
+            document.body.removeChild(textarea);
+        }
     }
 }
 
