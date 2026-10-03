@@ -598,3 +598,158 @@ body {
 .mission-result.mission-incomplete .result-score {
     color: #f56565;
 }
+
+/* Accessibility - Focus visible for all interactive elements */
+button:focus,
+input:focus,
+.btn:focus,
+.btn-answer:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Keyboard-friendly interaction feedback */
+button:active,
+.btn:active,
+.btn-answer:active {
+    transform: scale(0.95);
+}
+
+/* Ensure good contrast for text */
+.feedback,
+.results-summary p,
+.mission-result span {
+    color: #333;
+}
+
+/* Ensure icon + text feedback (not color-only) */
+.star-message::before {
+    content: "⭐ ";
+}
+
+.mission-result.mission-success::before {
+    content: "✓ ";
+    color: #48bb78;
+}
+
+.mission-result.mission-partial::before {
+    content: "~ ";
+    color: #ecc94b;
+}
+
+.mission-result.mission-incomplete::before {
+    content: "✗ ";
+    color: #f56565;
+}
+
+/* Improved touch targets on mobile */
+@media (max-width: 480px) {
+    .btn,
+    .btn-answer,
+    .card,
+    button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
+    }
+
+    .btn-answer {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .number-input {
+        width: 70px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .home-screen,
+    .mission-screen,
+    .results-screen,
+    .error-screen {
+        padding: 15px;
+    }
+
+    .app-title {
+        font-size: 1.5rem;
+    }
+
+    .greeting {
+        font-size: 1rem;
+    }
+
+    .mission-screen h2 {
+        font-size: 1.2rem;
+    }
+
+    .instruction {
+        font-size: 0.95rem;
+    }
+
+    .game-comparison .number {
+        font-size: 2rem;
+    }
+
+    .game-ordering .cards {
+        gap: 10px;
+    }
+
+    .card {
+        padding: 10px 15px;
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .buttons-game {
+        gap: 10px;
+    }
+
+    .btn-answer {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .number {
+        font-size: 1.5rem;
+    }
+}
+
+/* Ensure visible focus for keyboard navigation */
+:focus-visible {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Improved readability for small screens */
+@media (max-width: 600px) {
+    body {
+        font-size: 16px; /* Prevent auto-zoom on iOS */
+    }
+
+    .neighbor-display,
+    .between-display {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .cards {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+    }
+
+    .results-screen {
+        box-shadow: none;
+        padding: 0;
+    }
+}
