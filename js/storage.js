@@ -38,14 +38,10 @@ class StorageManager {
         try {
             const key = this.prefix + 'progress_' + lessonId;
             const data = localStorage.getItem(key);
-            if (data) {
-                const parsed = JSON.parse(data);
-                // Validate structure
-                if (parsed.lessonId && parsed.results) {
-                    console.log('Progress loaded:', lessonId);
-                    return parsed;
-                }
-            }
+            if (!data) return null;
+            const parsed = JSON.parse(data);
+            if (parsed && parsed.lessonId === lessonId && parsed.results && typeof parsed.results === 'object') return parsed;
+            console.warn('Ignoring invalid saved progress for lesson:', lessonId);
             return null;
         } catch (error) {
             console.error('Error loading progress (data may be corrupted):', error);
@@ -72,9 +68,7 @@ class StorageManager {
         try {
             const key = this.prefix + 'soundMuted';
             const data = localStorage.getItem(key);
-            if (data !== null) {
-                return JSON.parse(data);
-            }
+            if (data !== null) return JSON.parse(data) === true;
             return false; // Default: sound enabled
         } catch (error) {
             console.error('Error loading sound preference:', error);
