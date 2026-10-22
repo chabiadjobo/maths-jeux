@@ -1,0 +1,279 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-10-22-mesures-longueurs",
+  "date": "2026-10-22",
+  "title": "Les mesures de longueur",
+  "description": "Mesurer, estimer et convertir des longueurs en m, dm, cm et mm.",
+  "missions": [
+    {
+      "id": "m1",
+      "type": "estimate_measure",
+      "title": "La table de Félix et ta table",
+      "instruction": "Mesure ta table puis écris la même longueur dans plusieurs unités.",
+      "questions": [
+        {
+          "id": "m1q1",
+          "mode": "measure_and_convert",
+          "prompt": "Mesure la longueur de ta table d'écolier.",
+          "unit": "cm",
+          "referenceLabel": "La table de Félix",
+          "referenceValueCm": 120,
+          "hint": "1 m = 100 cm, 1 dm = 10 cm et 1 cm = 10 mm."
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "type": "estimate_measure",
+      "title": "Estime ton manuel",
+      "instruction": "Estime d'abord sans règle, puis mesure pour vérifier.",
+      "questions": [
+        {
+          "id": "m2q1",
+          "mode": "estimate_then_measure",
+          "prompt": "La longueur de ton manuel de mathématiques",
+          "unit": "cm"
+        },
+        {
+          "id": "m2q2",
+          "mode": "estimate_then_measure",
+          "prompt": "La largeur de ton manuel de mathématiques",
+          "unit": "cm"
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "type": "unit_conversion",
+      "title": "Écris en centimètres",
+      "instruction": "Transforme toutes les mesures en centimètres puis additionne-les.",
+      "questions": [
+        {
+          "id": "m3q1",
+          "terms": [
+            {
+              "value": 7,
+              "unit": "cm"
+            },
+            {
+              "value": 8,
+              "unit": "dm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 87
+        },
+        {
+          "id": "m3q2",
+          "terms": [
+            {
+              "value": 9,
+              "unit": "dm"
+            },
+            {
+              "value": 2,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 92
+        },
+        {
+          "id": "m3q3",
+          "terms": [
+            {
+              "value": 5,
+              "unit": "dm"
+            },
+            {
+              "value": 4,
+              "unit": "m"
+            },
+            {
+              "value": 2,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 452
+        },
+        {
+          "id": "m3q4",
+          "terms": [
+            {
+              "value": 10,
+              "unit": "dm"
+            },
+            {
+              "value": 3,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 103
+        },
+        {
+          "id": "m3q5",
+          "terms": [
+            {
+              "value": 4,
+              "unit": "m"
+            },
+            {
+              "value": 3,
+              "unit": "cm"
+            },
+            {
+              "value": 7,
+              "unit": "dm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 473
+        },
+        {
+          "id": "m3q6",
+          "terms": [
+            {
+              "value": 9,
+              "unit": "dm"
+            },
+            {
+              "value": 23,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "cm",
+          "answer": 113
+        }
+      ]
+    },
+    {
+      "id": "m4",
+      "type": "unit_conversion",
+      "title": "Écris en millimètres",
+      "instruction": "Transforme toutes les mesures en millimètres puis additionne-les.",
+      "questions": [
+        {
+          "id": "m4q1",
+          "terms": [
+            {
+              "value": 15,
+              "unit": "dm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 1500
+        },
+        {
+          "id": "m4q2",
+          "terms": [
+            {
+              "value": 4,
+              "unit": "m"
+            },
+            {
+              "value": 8,
+              "unit": "mm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 4008
+        },
+        {
+          "id": "m4q3",
+          "terms": [
+            {
+              "value": 13,
+              "unit": "dm"
+            },
+            {
+              "value": 14,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 1440
+        },
+        {
+          "id": "m4q4",
+          "terms": [
+            {
+              "value": 100,
+              "unit": "cm"
+            },
+            {
+              "value": 12,
+              "unit": "mm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 1012
+        },
+        {
+          "id": "m4q5",
+          "terms": [
+            {
+              "value": 3,
+              "unit": "mm"
+            },
+            {
+              "value": 4,
+              "unit": "dm"
+            },
+            {
+              "value": 12,
+              "unit": "cm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 523
+        },
+        {
+          "id": "m4q6",
+          "terms": [
+            {
+              "value": 120,
+              "unit": "cm"
+            },
+            {
+              "value": 19,
+              "unit": "mm"
+            }
+          ],
+          "targetUnit": "mm",
+          "answer": 1219
+        }
+      ]
+    },
+    {
+      "id": "m5",
+      "type": "estimate_measure",
+      "title": "Défi mesures autour de toi",
+      "instruction": "Choisis un objet, estime une dimension puis mesure-la réellement.",
+      "questions": [
+        {
+          "id": "m5q1",
+          "mode": "estimate_then_measure",
+          "prompt": "Objet 1",
+          "unit": "cm",
+          "allowLabel": true
+        },
+        {
+          "id": "m5q2",
+          "mode": "estimate_then_measure",
+          "prompt": "Objet 2",
+          "unit": "cm",
+          "allowLabel": true
+        },
+        {
+          "id": "m5q3",
+          "mode": "estimate_then_measure",
+          "prompt": "Objet 3",
+          "unit": "cm",
+          "allowLabel": true
+        }
+      ]
+    }
+  ]
+}

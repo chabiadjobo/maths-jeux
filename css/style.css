@@ -772,3 +772,18 @@ button:active,
         padding: 0;
     }
 }
+
+
+/* V1 - Mesures de longueur */
+.skip-action { margin: 1rem 0 0.4rem; text-align: center; }
+.btn-skip { background: transparent; border: 2px dashed #8a8fa8; color: #50566f; padding: 0.7rem 1rem; }
+.btn-skip:hover, .btn-skip:focus { background: #f3f4fb; }
+.conversion-card, .measure-card { max-width: 560px; margin: 0 auto 1rem; padding: 1.25rem; border-radius: 16px; background: #f7f8ff; }
+.conversion-expression { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; text-align: center; }
+.conversion-arrow { text-align: center; font-size: 1.8rem; margin: 0.3rem; }
+.conversion-answer, .measure-input-row, .multi-measure-row { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin: 0.8rem 0; flex-wrap: wrap; }
+.unit-label, .measure-input-row span, .multi-measure-row span { font-weight: 700; font-size: 1.1rem; }
+.measure-card { display: grid; gap: 0.65rem; }
+.measure-card label { font-weight: 600; }
+.text-input { width: 100%; box-sizing: border-box; padding: 0.8rem 1rem; border: 2px solid #c8cbea; border-radius: 10px; font-size: 1rem; }
+.multi-measure-row .number-input, .measure-input-row .number-input { max-width: 145px; }

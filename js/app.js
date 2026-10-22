@@ -48,7 +48,7 @@ class MathsGame {
 
         const missionIds = new Set();
         const questionIds = new Set();
-        const supportedTypes = new Set(['comparison', 'ordering', 'neighbor', 'between']);
+        const supportedTypes = new Set(['comparison', 'ordering', 'neighbor', 'between', 'unit_conversion', 'estimate_measure']);
         for (const mission of lesson.missions) {
             if (!mission || typeof mission.id !== 'string' || !mission.id) fail('mission without id');
             if (missionIds.has(mission.id)) fail(`duplicate mission id ${mission.id}`);
@@ -83,11 +83,26 @@ class MathsGame {
             if (![question.value, question.answer].every(Number.isFinite)) fail(`${question.id}: neighbor values must be numbers`);
         } else if (type === 'between') {
             if (![question.left, question.right, question.answer].every(Number.isFinite)) fail(`${question.id}: between values must be numbers`);
+        } else if (type === 'unit_conversion') {
+            const units = new Set(['m', 'dm', 'cm', 'mm']);
+            if (!Array.isArray(question.terms) || question.terms.length === 0) fail(`${question.id}: conversion terms are required`);
+            if (!question.terms.every(term => term && Number.isFinite(term.value) && units.has(term.unit))) fail(`${question.id}: invalid conversion term`);
+            if (!units.has(question.targetUnit) || !Number.isFinite(question.answer)) fail(`${question.id}: invalid conversion target or answer`);
+        } else if (type === 'estimate_measure') {
+            if (!['estimate_then_measure', 'measure_and_convert'].includes(question.mode)) fail(`${question.id}: invalid measurement mode`);
+            if (typeof question.prompt !== 'string' || !question.prompt) fail(`${question.id}: measurement prompt is required`);
+            if (question.mode === 'estimate_then_measure' && typeof question.unit !== 'string') fail(`${question.id}: measurement unit is required`);
+            if (question.mode === 'measure_and_convert' && !Number.isFinite(question.referenceValueCm)) fail(`${question.id}: referenceValueCm is required`);
         }
     }
 
     emptyQuestionResult() {
-        return { wrongAttempts: 0, completed: false, adultHelpRequired: false };
+        return {
+            wrongAttempts: 0,
+            completed: false,
+            adultHelpRequired: false,
+            skippedCount: 0
+        };
     }
 
     createInitialState() {
@@ -123,7 +138,9 @@ class MathsGame {
             state.results[question.id] = {
                 wrongAttempts: Number.isInteger(existing.wrongAttempts) && existing.wrongAttempts >= 0 ? existing.wrongAttempts : 0,
                 completed: existing.completed === true,
-                adultHelpRequired: existing.adultHelpRequired === true
+                adultHelpRequired: existing.adultHelpRequired === true,
+                skippedCount: Number.isInteger(existing.skippedCount) && existing.skippedCount >= 0 ? existing.skippedCount : 0,
+                skipped: existing.skipped === true
             };
         }
 
@@ -220,6 +237,7 @@ class MathsGame {
                 <header class="mission-header"><span class="mission-number">Mission ${this.currentMissionIndex + 1} / ${this.currentLesson.missions.length}</span>${this.soundButton()}</header>
                 <h1>${mission.title}</h1><p class="instruction">${mission.instruction}</p>
                 <div id="gameContainer"></div>
+                <div class="skip-action"><button class="btn btn-skip" type="button" onclick="window.game.skipCurrentQuestion()">⏭ Passer pour l'instant</button></div>
                 <div class="progress" aria-label="Progression dans la mission">
                     <div class="progress-bar"><div class="progress-fill" style="width: ${(this.currentQuestionIndex / mission.questions.length) * 100}%"></div></div>
                     <p class="progress-text">Question ${this.currentQuestionIndex + 1} / ${mission.questions.length}</p>
@@ -229,7 +247,7 @@ class MathsGame {
     }
 
     renderGame(type, question, container) {
-        const engines = { comparison: window.comparisonGame, ordering: window.orderingGame, neighbor: window.neighborGame, between: window.betweenGame };
+        const engines = { comparison: window.comparisonGame, ordering: window.orderingGame, neighbor: window.neighborGame, between: window.betweenGame, unit_conversion: window.unitConversionGame, estimate_measure: window.estimateMeasureGame };
         const engine = engines[type];
         if (!engine || typeof engine.render !== 'function') throw new Error(`Missing game engine for type ${type}`);
         engine.render(question, container);
@@ -237,13 +255,14 @@ class MathsGame {
 
     renderMissionComplete() {
         const mission = this.currentLesson.missions[this.currentMissionIndex];
-        const completed = mission.questions.filter(question => this.lessonState.results[question.id].completed).length;
+        const completed = mission.questions.filter(question => this.lessonState.results[question.id].completed && !this.lessonState.results[question.id].skipped).length;
+        const skipped = mission.questions.filter(question => this.lessonState.results[question.id].skipped).length;
         const withHelp = mission.questions.filter(question => this.lessonState.results[question.id].adultHelpRequired).length;
         document.getElementById('app').innerHTML = `
             <main class="mission-screen mission-complete-screen">
                 <header class="mission-header"><span class="mission-number">Mission ${this.currentMissionIndex + 1} / ${this.currentLesson.missions.length}</span>${this.soundButton()}</header>
                 <h1>Mission terminée ! 🎉</h1><h2>${mission.title}</h2>
-                <div class="results-summary"><p>Questions réussies : ${completed} / ${mission.questions.length}</p><p>Aide d’un adulte : ${withHelp}</p></div>
+                <div class="results-summary"><p>Questions réussies : ${completed} / ${mission.questions.length}</p><p>⏭ Questions passées : ${skipped}</p><p>Aide d’un adulte : ${withHelp}</p></div>
                 <button class="btn btn-primary" type="button" onclick="window.game.continueAfterMission()">Continuer</button>
             </main>`;
     }
@@ -255,9 +274,9 @@ class MathsGame {
                 <h1>Séance terminée ! 🎉</h1><h2>${this.currentLesson.title}</h2>
                 <div class="final-score"><p class="score-text">${results.totalCorrect} / ${results.totalQuestions} questions réussies</p><div class="stars" aria-label="${results.stars} étoiles sur 5">${'⭐'.repeat(results.stars)}</div><p class="star-message">${results.starMessage}</p></div>
                 <section class="results-by-mission" aria-labelledby="mission-results-title"><h3 id="mission-results-title">Résultats par mission :</h3>
-                    ${results.missions.map(mission => `<div class="mission-result mission-${mission.status}"><span>${mission.title}</span><span class="result-score">${mission.correct}/${mission.total}</span></div>`).join('')}
+                    ${results.missions.map(mission => `<div class="mission-result mission-${mission.status}"><span>${mission.title}</span><span class="result-score">${mission.correct}/${mission.total}${mission.skipped ? ` • ⏭ ${mission.skipped}` : ''}</span></div>`).join('')}
                 </section>
-                <div class="results-summary"><p>✅ Réussies sans aide : ${results.correctWithoutHelp}</p><p>🆘 Réussies après aide : ${results.correctWithHelp}</p><p>❌ Erreurs totales : ${results.totalErrors}</p></div>
+                <div class="results-summary"><p>✅ Réussies sans aide : ${results.correctWithoutHelp}</p><p>🆘 Réussies après aide : ${results.correctWithHelp}</p><p>⏭ Questions passées : ${results.totalSkipped}</p><p>❌ Erreurs totales : ${results.totalErrors}</p></div>
                 <div class="buttons">
                     ${this.hasErrors() ? '<button class="btn btn-primary" type="button" onclick="window.game.retryErrors()">Rejouer mes erreurs</button>' : ''}
                     <button class="btn btn-secondary" type="button" onclick="window.game.copyResults()">Copier mon résultat</button>
@@ -338,7 +357,7 @@ class MathsGame {
             this.audio.playSuccess();
             feedback.innerHTML = '<div class="feedback feedback-success" role="status" aria-live="polite">✅ Bien joué ! 🎉</div>';
             this.saveProgress();
-            window.setTimeout(() => this.nextQuestion(), 700);
+            window.setTimeout(() => this.nextQuestion(), 4500);
             return 'success';
         }
 
@@ -381,7 +400,45 @@ class MathsGame {
 
     recordCompletion(questionId) {
         if (this.retryMode) this.retryResults[questionId].completed = true;
-        else this.lessonState.results[questionId].completed = true;
+        else {
+            this.lessonState.results[questionId].completed = true;
+            this.lessonState.results[questionId].skipped = false;
+        }
+    }
+
+    completeOpenQuestion(questionId, message) {
+        this.recordCompletion(questionId);
+        this.audio.playSuccess();
+        const feedback = document.getElementById('feedbackContainer');
+        if (feedback) feedback.innerHTML = `<div class="feedback feedback-success" role="status" aria-live="polite">${message}</div>`;
+        this.saveProgress();
+        window.setTimeout(() => this.nextQuestion(), 1400);
+    }
+
+    skipCurrentQuestion() {
+        if (this.retryMode) {
+            this.nextQuestion();
+            return;
+        }
+        const mission = this.currentLesson.missions[this.currentMissionIndex];
+        const question = mission.questions[this.currentQuestionIndex];
+        const result = this.lessonState.results[question.id];
+        result.skippedCount = (result.skippedCount || 0) + 1;
+        if (result.skippedCount >= 2) {
+            result.skipped = true;
+            result.completed = true;
+        }
+        this.saveProgress();
+        this.nextQuestion();
+    }
+
+    findNextPendingQuestionIndex(mission, currentIndex) {
+        for (let offset = 1; offset < mission.questions.length; offset++) {
+            const index = (currentIndex + offset) % mission.questions.length;
+            const result = this.lessonState.results[mission.questions[index].id];
+            if (!result.completed) return index;
+        }
+        return -1;
     }
 
     getCurrentMissionType(questionId) {
@@ -400,9 +457,14 @@ class MathsGame {
             this.render();
             return;
         }
+
         const mission = this.currentLesson.missions[this.currentMissionIndex];
-        if (this.currentQuestionIndex < mission.questions.length - 1) {
-            this.currentQuestionIndex++;
+        const nextPendingIndex = this.findNextPendingQuestionIndex(mission, this.currentQuestionIndex);
+        if (nextPendingIndex !== -1) {
+            this.currentQuestionIndex = nextPendingIndex;
+            this.updateCurrentPosition('mission');
+        } else if (!this.lessonState.results[mission.questions[this.currentQuestionIndex].id].completed) {
+            // A single-question mission skipped once: show it once more before allowing a final skip.
             this.updateCurrentPosition('mission');
         } else if (this.currentMissionIndex < this.currentLesson.missions.length - 1) {
             this.lessonState.screen = 'missionComplete';
@@ -469,7 +531,7 @@ class MathsGame {
         const results = window.ScoringManager.calculateResults(this.currentLesson, this.lessonState);
         const date = new Date(this.lessonState.startedAt).toLocaleDateString('fr-FR');
         const missionLines = results.missions.map(mission => `${mission.title} : ${mission.correct}/${mission.total}`).join('\n');
-        const text = `Amusons-nous avec les maths — ${date}\n${this.currentLesson.title}\n\n${missionLines}\n\nTotal : ${results.totalCorrect}/${results.totalQuestions}\nRéussies sans aide : ${results.correctWithoutHelp}\nRéussies après aide : ${results.correctWithHelp}\nErreurs : ${results.totalErrors}`;
+        const text = `Amusons-nous avec les maths — ${date}\n${this.currentLesson.title}\n\n${missionLines}\n\nTotal : ${results.totalCorrect}/${results.totalQuestions}\nRéussies sans aide : ${results.correctWithoutHelp}\nRéussies après aide : ${results.correctWithHelp}\nQuestions passées : ${results.totalSkipped}\nErreurs : ${results.totalErrors}`;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => window.alert('Résultat copié !')).catch(error => {
                 console.warn('Clipboard API unavailable, using fallback:', error);
