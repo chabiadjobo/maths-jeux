@@ -38,7 +38,8 @@ function loadScripts(relativePaths, extra = {}) {
     return { context, listeners };
 }
 
-const lesson = JSON.parse(read('data/current.json'));
+const lesson = JSON.parse(read('data/lessons/2026-10-03-nombres-0-10000.json'));
+const measuresLesson = JSON.parse(read('data/current.json'));
 
 function fakeStorage() {
     return {
@@ -278,6 +279,46 @@ test('initialization has one entry point and creates storage, audio, then window
     const audioIndex = app.indexOf('window.audio =');
     const gameIndex = app.indexOf('window.game =');
     assert.ok(storageIndex >= 0 && storageIndex < audioIndex && audioIndex < gameIndex);
+});
+
+
+
+test('the measures lesson contains the controlled book exercises and 18 questions', () => {
+    assert.equal(measuresLesson.id, '2026-10-22-mesures-longueurs');
+    assert.deepEqual(measuresLesson.missions.map(mission => mission.questions.length), [1, 2, 6, 6, 3]);
+    assert.equal(measuresLesson.missions.flatMap(mission => mission.questions).length, 18);
+    const mmQuestionF = measuresLesson.missions.find(m => m.id === 'm4').questions.find(q => q.id === 'm4q6');
+    assert.equal(mmQuestionF.answer, 1219);
+});
+
+test('new length engines expose render(question, container)', () => {
+    const { context } = loadScripts(['js/games/unit_conversion.js', 'js/games/estimate_measure.js']);
+    assert.equal(typeof context.window.unitConversionGame.render, 'function');
+    assert.equal(typeof context.window.estimateMeasureGame.render, 'function');
+});
+
+test('lesson validation accepts the new length lesson', () => {
+    const { context } = loadScripts(['js/app.js']);
+    const game = new context.window.MathsGame(fakeStorage(), fakeAudio());
+    assert.equal(game.validateLesson(measuresLesson), true);
+});
+
+test('skipping twice completes a question as skipped without counting an error', () => {
+    const { context } = loadScripts(['js/app.js']);
+    const game = new context.window.MathsGame(fakeStorage(), fakeAudio());
+    game.currentLesson = measuresLesson;
+    game.lessonState = game.createInitialState();
+    game.render = () => {};
+    game.currentMissionIndex = 0;
+    game.currentQuestionIndex = 0;
+    game.skipCurrentQuestion();
+    assert.equal(game.lessonState.results.m1q1.skippedCount, 1);
+    assert.equal(game.lessonState.results.m1q1.completed, false);
+    game.skipCurrentQuestion();
+    assert.equal(game.lessonState.results.m1q1.skippedCount, 2);
+    assert.equal(game.lessonState.results.m1q1.completed, true);
+    assert.equal(game.lessonState.results.m1q1.skipped, true);
+    assert.equal(game.lessonState.results.m1q1.wrongAttempts, 0);
 });
 
 let failed = 0;
